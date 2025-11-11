@@ -1,0 +1,62 @@
+services:
+  # Order Service Stack
+  order-db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: order_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - order_data:/var/lib/postgresql/data
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8081:8080"
+    depends_on:
+      - order-db
+
+  # Inventory Service Stack  
+  inventory-db:
+    image: mongo:7.0
+#    environment:
+#      MONGO_INITDB_ROOT_USERNAME: admin
+#      MONGO_INITDB_ROOT_PASSWORD: password
+#      MONGO_INITDB_DATABASE: inventory_db
+    ports:
+      - "27012:27017"
+    volumes:
+      - inventory_data:/data/db
+
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "8082:8080"
+    depends_on:
+      - inventory-db
+
+  # Customer Service Stack
+  customer-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: customer_db
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - customer_data:/var/lib/mysql
+
+  customer-service:
+    build: ./customer-service
+    ports:
+      - "8083:8080"
+    depends_on:
+      - customer-db
+
+volumes:
+  order_data:
+  inventory_data:
+  customer_data:
