@@ -1,5 +1,6 @@
 package mps.service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +25,7 @@ public class PaymentService {
     }
     
     public Payment createPayment(Payment payment) {
+        payment.setCreatedAt(new Date());
         return paymentRepository.save(payment);
     }
     
@@ -31,11 +33,13 @@ public class PaymentService {
         Payment payment = paymentRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Payment not found with id: " + id));
         
-        payment.setId(paymentDetails.getId());
+        // payment.setId(paymentDetails.getId());
         payment.setOrderId(paymentDetails.getOrderId());
         payment.setAmount(paymentDetails.getAmount());
+        payment.setPaymentMethod(paymentDetails.getPaymentMethod());
         payment.setStatus(paymentDetails.getStatus());
-        
+        payment.setTransactionId(paymentDetails.getTransactionId()); 
+
         return paymentRepository.save(payment);
     }
     

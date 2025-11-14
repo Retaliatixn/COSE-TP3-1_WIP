@@ -56,6 +56,26 @@ services:
     depends_on:
       - customer-db
 
+  # Payment Service Stack
+  payment-db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: payment_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432"
+
+    volumes:
+      - payment_data:/var/lib/postgresql/data
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8084:8080"
+    depends_on:
+      - payment-db
+
   # Shipping Service Stack  
   shipping-db:
     image: mongo:7.0
@@ -75,8 +95,28 @@ services:
     depends_on:
       - shipping-db
 
+  # Notification Service Stack
+  notification-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: notification_db
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3307:3306"
+    volumes:
+      - notification_data:/var/lib/mysql
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "8086:8080"
+    depends_on:
+      - notification-db
+
 volumes:
   order_data:
   inventory_data:
   customer_data:
+  payment_data:
   shipping_data:
+  notification_data:

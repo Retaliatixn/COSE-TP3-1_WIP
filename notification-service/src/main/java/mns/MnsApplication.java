@@ -1,13 +1,13 @@
-package mcs;
+package mns;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class McsApplication {
+public class MnsApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(McsApplication.class, args);
+		SpringApplication.run(MnsApplication.class, args);
 	}
 
 }
