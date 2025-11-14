@@ -56,7 +56,27 @@ services:
     depends_on:
       - customer-db
 
+  # Shipping Service Stack  
+  shipping-db:
+    image: mongo:7.0
+#    environment:
+#      MONGO_INITDB_ROOT_USERNAME: admin
+#      MONGO_INITDB_ROOT_PASSWORD: password
+#      MONGO_INITDB_DATABASE: shipping_db
+    ports:
+      - "27013:27017"
+    volumes:
+      - shipping_data:/data/db
+
+  shipping-service:
+    build: ./shipping-service
+    ports:
+      - "8082:8080"
+    depends_on:
+      - shipping-db
+
 volumes:
   order_data:
   inventory_data:
   customer_data:
+  shipping_data:

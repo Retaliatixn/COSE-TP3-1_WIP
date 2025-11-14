@@ -1,0 +1,31 @@
+# Server Configuration
+server:
+  port: 8081
+
+# Application Configuration  
+spring:
+  application:
+    name: order-service
+  
+  # PostgreSQL Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5433/order_service
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  
+  # JPA Configuration for PostgreSQL
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create-drop  # Use 'update' in production
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# Logging
+logging:
+  level:
+    org.springframework.web: DEBUG
+    mos: DEBUG
