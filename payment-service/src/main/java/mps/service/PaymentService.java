@@ -25,9 +25,29 @@ public class PaymentService {
     }
     
     public Payment getPaymentByOrderId(Long orderId) {
-        return paymentRepository.findAll().stream()
-            .filter(p -> p.getOrderId().equals(orderId))
-            .findFirst()
+        return paymentRepository.findByOrderId(orderId)
             .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
+    }
+    
+    public Payment createPayment(Payment payment) {
+        return paymentRepository.save(payment);
+    }
+    
+    public Payment updatePayment(Long id, Payment payment) {
+        Payment existing = getPayment(id);
+        if (payment.getAmount() != null) {
+            existing.setAmount(payment.getAmount());
+        }
+        if (payment.getStatus() != null) {
+            existing.setStatus(payment.getStatus());
+        }
+        if (payment.getPaymentMethod() != null) {
+            existing.setPaymentMethod(payment.getPaymentMethod());
+        }
+        return paymentRepository.save(existing);
+    }
+    
+    public void deletePayment(Long id) {
+        paymentRepository.deleteById(id);
     }
 }

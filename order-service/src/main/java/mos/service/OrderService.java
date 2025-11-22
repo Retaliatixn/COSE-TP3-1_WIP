@@ -1,16 +1,19 @@
 package mos.service;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import mos.client.CustomerServiceClient;
 import mos.client.InventoryServiceClient;
 import mos.dto.OrderRequest;
 import mos.events.OrderEvent;
 import mos.model.Order;
 import mos.repository.OrderRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
@@ -101,5 +104,67 @@ public class OrderService {
     public Order getOrder(Long id) {
         return orderRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Order not found: " + id));
+    }
+    
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
+    
+    @Transactional
+    public Order updateOrder(Long id, OrderRequest request) {
+        Order order = getOrder(id);
+        
+        // Only update if order is in PENDING or VALIDATED state
+        if (!order.getStatus().equals(Order.OrderStatus.PENDING) && 
+            !order.getStatus().equals(Order.OrderStatus.VALIDATED)) {
+            throw new RuntimeException("Cannot update order in " + order.getStatus() + " status");
+        }
+        
+        log.info("Updating order {}", id);
+        
+        // Validate new customer if changed
+        if (!order.getCustomerId().equals(request.getCustomerId())) {
+            boolean customerExists = customerClient.customerExists(request.getCustomerId());
+            if (!customerExists) {
+                throw new RuntimeException("Customer not found: " + request.getCustomerId());
+            }
+            order.setCustomerId(request.getCustomerId());
+        }
+        
+        // Validate new inventory if changed
+        if (!order.getProductId().equals(request.getProductId()) || 
+            !order.getQuantity().equals(request.getQuantity())) {
+            var productInfo = inventoryClient.checkInventory(
+                request.getProductId(), 
+                request.getQuantity()
+            );
+            if (!productInfo.isAvailable()) {
+                throw new RuntimeException("Insufficient inventory for product: " + request.getProductId());
+            }
+            order.setProductId(request.getProductId());
+            order.setQuantity(request.getQuantity());
+            order.setTotalAmount(productInfo.getPrice() * request.getQuantity());
+        }
+        
+        order = orderRepository.save(order);
+        log.info("Order {} updated successfully", id);
+        return order;
+    }
+    
+    @Transactional
+    public void deleteOrder(Long id) {
+        Order order = getOrder(id);
+        
+        // Only delete if order is in PENDING, VALIDATED, or CANCELLED state
+        if (order.getStatus().equals(Order.OrderStatus.PAYMENT_PROCESSING) ||
+            order.getStatus().equals(Order.OrderStatus.PAID) ||
+            order.getStatus().equals(Order.OrderStatus.SHIPPED) ||
+            order.getStatus().equals(Order.OrderStatus.DELIVERED)) {
+            throw new RuntimeException("Cannot delete order in " + order.getStatus() + " status");
+        }
+        
+        log.info("Deleting order {}", id);
+        orderRepository.deleteById(id);
+        log.info("Order {} deleted successfully", id);
     }
 }

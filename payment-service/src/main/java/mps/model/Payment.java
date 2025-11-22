@@ -1,14 +1,7 @@
 package mps.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "payments")
@@ -24,20 +17,20 @@ public class Payment {
     @Column(nullable = false)
     private Double amount;
     
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String status;
+    
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod;
+    
+    @Column(name = "transaction_id", unique = true)
+    private String transactionId;
     
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "payment_method")
-    private String paymentMethod;
-    
-    @Column(name = "transaction_id")
-    private String transactionId;
     
     // Constructors
     public Payment() {}
@@ -83,17 +76,6 @@ public class Payment {
         this.status = status;
     }
     
-    public LocalDateTime getPaymentDate() {
-        return paymentDate;
-    }
-    
-    public void setPaymentDate(LocalDateTime paymentDate) {
-        this.paymentDate = paymentDate;
-    }
-    
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
     public String getPaymentMethod() {
         return paymentMethod;
     }
@@ -110,4 +92,31 @@ public class Payment {
         this.transactionId = transactionId;
     }
     
+    public LocalDateTime getPaymentDate() {
+        return paymentDate;
+    }
+    
+    public void setPaymentDate(LocalDateTime paymentDate) {
+        this.paymentDate = paymentDate;
+    }
+    
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+    
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+    
+    @Override
+    public String toString() {
+        return "Payment{" +
+                "id=" + id +
+                ", orderId=" + orderId +
+                ", amount=" + amount +
+                ", status='" + status + '\'' +
+                ", transactionId='" + transactionId + '\'' +
+                ", paymentDate=" + paymentDate +
+                '}';
+    }
 }

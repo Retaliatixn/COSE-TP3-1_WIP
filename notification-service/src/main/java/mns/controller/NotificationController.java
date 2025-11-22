@@ -7,10 +7,14 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -45,29 +49,55 @@ public class NotificationController {
         return ResponseEntity.ok(collectionModel);
     }
     
-    private EntityModel<Notification> toModel(Notification notification) {
-        EntityModel<Notification> model = EntityModel.of(notification);
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<CollectionModel<EntityModel<Notification>>> getNotificationsByOrderId(@PathVariable Long orderId) {
+        List<EntityModel<Notification>> notifications = notificationService.getNotificationsByOrderId(orderId)
+            .stream()
+            .map(this::toModel)
+            .collect(Collectors.toList());
         
-        model.add(linkTo(methodOn(NotificationController.class).getNotification(notification.getId())).withSelfRel());
-        model.add(linkTo(methodOn(NotificationController.class).getAllNotifications()).withRel("notifications"));
+        CollectionModel<EntityModel<Notification>> collectionModel = CollectionModel.of(notifications);
+        collectionModel.add(linkTo(methodOn(NotificationController.class).getNotificationsByOrderId(orderId)).withSelfRel());
         
-        // Link to related resources
-        if (notification.getOrderId() != null) {
-            model.add(linkTo(methodOn(NotificationController.class).getNotification(notification.getId()))
-                .slash("../../orders/" + notification.getOrderId())
-                .withRel("order"));
-        }
-        if (notification.getCustomerId() != null) {
-            model.add(linkTo(methodOn(NotificationController.class).getNotification(notification.getId()))
-                .slash("../../customers/" + notification.getCustomerId())
-                .withRel("customer"));
-        }
-        
-        return model;
+        return ResponseEntity.ok(collectionModel);
     }
     
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> handleException(RuntimeException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<CollectionModel<EntityModel<Notification>>> getNotificationsByCustomerId(@PathVariable Long customerId) {
+        List<EntityModel<Notification>> notifications = notificationService.getNotificationsByCustomerId(customerId)
+            .stream()
+            .map(this::toModel)
+            .collect(Collectors.toList());
+        
+        CollectionModel<EntityModel<Notification>> collectionModel = CollectionModel.of(notifications);
+        collectionModel.add(linkTo(methodOn(NotificationController.class).getNotificationsByCustomerId(customerId)).withSelfRel());
+        
+        return ResponseEntity.ok(collectionModel);
+    }
+    
+    @PostMapping
+    public ResponseEntity<EntityModel<Notification>> createNotification(@RequestBody Notification notification) {
+        Notification created = notificationService.createNotification(notification);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<EntityModel<Notification>> updateNotification(@PathVariable Long id, @RequestBody Notification notification) {
+        Notification updated = notificationService.updateNotification(id, notification);
+        return ResponseEntity.ok(toModel(updated));
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
+        notificationService.deleteNotification(id);
+        return ResponseEntity.noContent().build();
+    }
+    
+    private EntityModel<Notification> toModel(Notification notification) {
+        return EntityModel.of(notification,
+            linkTo(methodOn(NotificationController.class).getNotification(notification.getId())).withSelfRel(),
+            linkTo(methodOn(NotificationController.class).getAllNotifications()).withRel("notifications"),
+            linkTo(methodOn(NotificationController.class).getNotificationsByOrderId(notification.getOrderId())).withRel("order-notifications"),
+            linkTo(methodOn(NotificationController.class).getNotificationsByCustomerId(notification.getCustomerId())).withRel("customer-notifications"));
     }
 }

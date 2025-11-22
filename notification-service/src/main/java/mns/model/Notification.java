@@ -1,14 +1,7 @@
 package mns.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "notifications")
@@ -23,9 +16,17 @@ public class Notification {
     @Column(name = "customer_id")
     private Long customerId;
     
+    @Column(length = 1000)
     private String message;
+    
+    @Column(length = 50)
     private String type;
+    
+    @Column(length = 50)
     private String status;
+    
+    @Column(length = 100)
+    private String channel;
     
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
@@ -39,7 +40,9 @@ public class Notification {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        sentAt = LocalDateTime.now();
+        if (sentAt == null) {
+            sentAt = LocalDateTime.now();
+        }
     }
     
     // Getters and Setters
@@ -91,6 +94,14 @@ public class Notification {
         this.status = status;
     }
     
+    public String getChannel() {
+        return channel;
+    }
+    
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+    
     public LocalDateTime getSentAt() {
         return sentAt;
     }
@@ -105,5 +116,16 @@ public class Notification {
     
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    @Override
+    public String toString() {
+        return "Notification{" +
+                "id=" + id +
+                ", orderId=" + orderId +
+                ", customerId=" + customerId +
+                ", type='" + type + '\'' +
+                ", status='" + status + '\'' +
+                '}';
     }
 }

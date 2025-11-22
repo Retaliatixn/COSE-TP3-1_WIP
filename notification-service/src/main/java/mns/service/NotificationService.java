@@ -27,4 +27,33 @@ public class NotificationService {
     public List<Notification> getAllNotifications() {
         return notificationRepository.findAll();
     }
+    
+    public List<Notification> getNotificationsByOrderId(Long orderId) {
+        return notificationRepository.findByOrderId(orderId);
+    }
+    
+    public List<Notification> getNotificationsByCustomerId(Long customerId) {
+        return notificationRepository.findByCustomerId(customerId);
+    }
+    
+    public Notification updateNotification(Long id, Notification notification) {
+        Notification existing = getNotification(id);
+        if (notification.getMessage() != null) {
+            existing.setMessage(notification.getMessage());
+        }
+        if (notification.getStatus() != null) {
+            existing.setStatus(notification.getStatus());
+        }
+        if (notification.getType() != null) {
+            existing.setType(notification.getType());
+        }
+        if (notification.getChannel() != null) {
+            existing.setChannel(notification.getChannel());
+        }
+        return notificationRepository.save(existing);
+    }
+    
+    public void deleteNotification(Long id) {
+        notificationRepository.deleteById(id);
+    }
 }

@@ -1,15 +1,21 @@
 package mos.controller;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,6 +46,30 @@ public class OrderController {
         return ResponseEntity.ok(toModel(order));
     }
     
+    @GetMapping
+    public ResponseEntity<CollectionModel<EntityModel<Order>>> getAllOrders() {
+        List<EntityModel<Order>> orders = orderService.getAllOrders()
+            .stream()
+            .map(this::toModel)
+            .collect(Collectors.toList());
+        
+        CollectionModel<EntityModel<Order>> collectionModel = CollectionModel.of(orders);
+        collectionModel.add(linkTo(methodOn(OrderController.class).getAllOrders()).withSelfRel());
+        
+        return ResponseEntity.ok(collectionModel);
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<EntityModel<Order>> updateOrder(@PathVariable Long id, @RequestBody OrderRequest request) {
+        Order order = orderService.updateOrder(id, request);
+        return ResponseEntity.ok(toModel(order));
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
+        orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
+    }
     // Convert Order to HATEOAS EntityModel with links based on state
     private EntityModel<Order> toModel(Order order) {
         EntityModel<Order> model = EntityModel.of(order);

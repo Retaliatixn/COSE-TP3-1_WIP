@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import org.springframework.http.HttpStatus;
@@ -31,12 +32,6 @@ public class ShippingController {
         this.shippingService = shippingService;
     }
     
-    @PostMapping
-    public ResponseEntity<EntityModel<Shipment>> createShipment(@RequestBody Shipment shipment) {
-        Shipment created = shippingService.createShipment(shipment);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
-    }
-    
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<Shipment>> getShipment(@PathVariable String id) {
         Shipment shipment = shippingService.getShipment(id);
@@ -54,6 +49,18 @@ public class ShippingController {
         collectionModel.add(linkTo(methodOn(ShippingController.class).getAllShipments()).withSelfRel());
         
         return ResponseEntity.ok(collectionModel);
+    }
+    
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<EntityModel<Shipment>> getShipmentByOrderId(@PathVariable Long orderId) {
+        Shipment shipment = shippingService.getShipmentByOrderId(orderId);
+        return ResponseEntity.ok(toModel(shipment));
+    }
+    
+    @PostMapping
+    public ResponseEntity<EntityModel<Shipment>> createShipment(@RequestBody Shipment shipment) {
+        Shipment created = shippingService.createShipment(shipment);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
     }
     
     @PutMapping("/{id}")
@@ -75,19 +82,11 @@ public class ShippingController {
         model.add(linkTo(methodOn(ShippingController.class).getAllShipments()).withRel("shipments"));
         
         // State-based links
-        if ("PENDING".equals(shipment.getStatus())) {
-            model.add(linkTo(methodOn(ShippingController.class).updateShipment(shipment.getId(), null))
-                .withRel("ship"));
+        if ("PROCESSING".equals(shipment.getStatus()) || "PENDING".equals(shipment.getStatus())) {
+            model.add(Link.of("/api/shipping/" + shipment.getId() + "/ship", "ship"));
         } else if ("SHIPPED".equals(shipment.getStatus())) {
-            model.add(linkTo(methodOn(ShippingController.class).getShipment(shipment.getId()))
-                .slash("tracking")
-                .withRel("track"));
+            model.add(Link.of("/api/shipping/" + shipment.getId() + "/track", "track"));
         }
-        
-        // Link to related order
-        model.add(linkTo(methodOn(ShippingController.class).getShipment(shipment.getId()))
-            .slash("../../orders/" + shipment.getOrderId())
-            .withRel("order"));
         
         return model;
     }

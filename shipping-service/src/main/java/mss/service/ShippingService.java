@@ -1,13 +1,10 @@
 package mss.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import mss.model.Shipment;
 import mss.repository.ShippingRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class ShippingService {
@@ -18,8 +15,6 @@ public class ShippingService {
     }
     
     public Shipment createShipment(Shipment shipment) {
-        shipment.setTrackingNumber("TRK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        shipment.setShippedDate(LocalDateTime.now());
         return shippingRepository.save(shipment);
     }
     
@@ -41,5 +36,10 @@ public class ShippingService {
     
     public void deleteShipment(String id) {
         shippingRepository.deleteById(id);
+    }
+    
+    public Shipment getShipmentByOrderId(Long orderId) {
+        return shippingRepository.findByOrderId(orderId)
+            .orElseThrow(() -> new RuntimeException("Shipment not found for order: " + orderId));
     }
 }

@@ -1,19 +1,22 @@
 package mss.model;
 
-import java.time.LocalDateTime;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
 
 @Document(collection = "shipments")
 public class Shipment {
     @Id
     private String id;
+    
     private Long orderId;
     private String trackingNumber;
     private String status;
+    private String carrier;
     private String address;
     private LocalDateTime shippedDate;
+    private LocalDateTime estimatedDelivery;
     private LocalDateTime deliveryDate;
     private LocalDateTime createdAt;
     
@@ -56,6 +59,14 @@ public class Shipment {
         this.status = status;
     }
     
+    public String getCarrier() {
+        return carrier;
+    }
+    
+    public void setCarrier(String carrier) {
+        this.carrier = carrier;
+    }
+    
     public String getAddress() {
         return address;
     }
@@ -72,6 +83,14 @@ public class Shipment {
         this.shippedDate = shippedDate;
     }
     
+    public LocalDateTime getEstimatedDelivery() {
+        return estimatedDelivery;
+    }
+    
+    public void setEstimatedDelivery(LocalDateTime estimatedDelivery) {
+        this.estimatedDelivery = estimatedDelivery;
+    }
+    
     public LocalDateTime getDeliveryDate() {
         return deliveryDate;
     }
@@ -86,5 +105,16 @@ public class Shipment {
     
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    @Override
+    public String toString() {
+        return "Shipment{" +
+                "id='" + id + '\'' +
+                ", orderId=" + orderId +
+                ", trackingNumber='" + trackingNumber + '\'' +
+                ", status='" + status + '\'' +
+                ", carrier='" + carrier + '\'' +
+                '}';
     }
 }

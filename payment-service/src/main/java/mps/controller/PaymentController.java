@@ -1,16 +1,26 @@
 package mps.controller;
 
-import mps.model.Payment;
-import mps.service.PaymentService;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import mps.model.Payment;
+import mps.service.PaymentService;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -46,16 +56,31 @@ public class PaymentController {
         return ResponseEntity.ok(toModel(payment));
     }
     
+    @PostMapping
+    public ResponseEntity<EntityModel<Payment>> createPayment(@RequestBody Payment payment) {
+        Payment created = paymentService.createPayment(payment);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
+    }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<EntityModel<Payment>> updatePayment(@PathVariable Long id, @RequestBody Payment payment) {
+        Payment updated = paymentService.updatePayment(id, payment);
+        return ResponseEntity.ok(toModel(updated));
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePayment(@PathVariable Long id) {
+        paymentService.deletePayment(id);
+        return ResponseEntity.noContent().build();
+    }
+    
     private EntityModel<Payment> toModel(Payment payment) {
         EntityModel<Payment> model = EntityModel.of(payment);
         
         model.add(linkTo(methodOn(PaymentController.class).getPayment(payment.getId())).withSelfRel());
         model.add(linkTo(methodOn(PaymentController.class).getAllPayments()).withRel("payments"));
-        
-        // Link to related order
-        model.add(linkTo(methodOn(PaymentController.class).getPayment(payment.getId()))
-            .slash("../../orders/" + payment.getOrderId())
-            .withRel("order"));
+        model.add(linkTo(methodOn(PaymentController.class).getPaymentByOrderId(payment.getOrderId()))
+            .withRel("payment-by-order"));
         
         return model;
     }
