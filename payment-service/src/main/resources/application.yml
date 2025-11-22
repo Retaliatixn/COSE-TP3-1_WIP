@@ -14,18 +14,31 @@ spring:
     password: password
     driver-class-name: org.postgresql.Driver
   
-  # JPA Configuration for PostgreSQL
+  # JPA Configuration
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: create-drop  # Use 'update' in production
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
 
+  # Kafka Configuration - FIXED FOR DOCKER
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: payment-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: mps.events.OrderEvent
+
 # Logging
 logging:
   level:
-    org.springframework.web: DEBUG
-    mps: DEBUG
+    org.springframework.web: INFO
+    mps: INFO
+    org.apache.kafka: WARN

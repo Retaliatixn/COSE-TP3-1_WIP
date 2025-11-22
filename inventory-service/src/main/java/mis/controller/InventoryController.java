@@ -1,79 +1,56 @@
 package mis.controller;
 
+import mis.model.Product;
+import mis.service.InventoryService;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import mis.model.Product;
-import mis.service.InventoryService;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 @RequestMapping("/api/inventory")
 public class InventoryController {
+    private final InventoryService inventoryService;
     
-    @Autowired
-    private InventoryService inventoryService;
-    
-    @GetMapping
-    public CollectionModel<EntityModel<Product>> getAllProducts() {
-        List<EntityModel<Product>> products = inventoryService.getAllProducts().stream()
-            .map(product -> EntityModel.of(product,
-                linkTo(methodOn(InventoryController.class).getProductById(product.getId())).withSelfRel(),
-                linkTo(methodOn(InventoryController.class).getAllProducts()).withRel("products")))
-            .collect(Collectors.toList());
-        
-        return CollectionModel.of(products,
-            linkTo(methodOn(InventoryController.class).getAllProducts()).withSelfRel());
-    }
-    
-    @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<Product>> getProductById(@PathVariable String id) {
-        return inventoryService.getProductById(id)
-            .map(product -> EntityModel.of(product,
-                linkTo(methodOn(InventoryController.class).getProductById(id)).withSelfRel(),
-                linkTo(methodOn(InventoryController.class).getAllProducts()).withRel("products")))
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    public InventoryController(InventoryService inventoryService) {
+        this.inventoryService = inventoryService;
     }
     
     @PostMapping
     public ResponseEntity<EntityModel<Product>> createProduct(@RequestBody Product product) {
-        Product savedProduct = inventoryService.createProduct(product);
-        EntityModel<Product> productResource = EntityModel.of(savedProduct,
-            linkTo(methodOn(InventoryController.class).getProductById(savedProduct.getId())).withSelfRel(),
-            linkTo(methodOn(InventoryController.class).getAllProducts()).withRel("products"));
+        Product created = inventoryService.createProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<EntityModel<Product>> getProduct(@PathVariable String id) {
+        Product product = inventoryService.getProduct(id);
+        return ResponseEntity.ok(toModel(product));
+    }
+    
+    @GetMapping
+    public ResponseEntity<CollectionModel<EntityModel<Product>>> getAllProducts() {
+        List<EntityModel<Product>> products = inventoryService.getAllProducts()
+            .stream()
+            .map(this::toModel)
+            .collect(Collectors.toList());
         
-        return ResponseEntity.created(
-            linkTo(methodOn(InventoryController.class).getProductById(savedProduct.getId())).toUri())
-            .body(productResource);
+        CollectionModel<EntityModel<Product>> collectionModel = CollectionModel.of(products);
+        collectionModel.add(linkTo(methodOn(InventoryController.class).getAllProducts()).withSelfRel());
+        
+        return ResponseEntity.ok(collectionModel);
     }
     
     @PutMapping("/{id}")
-    public ResponseEntity<EntityModel<Product>> updateProduct(@PathVariable String id, @RequestBody Product productDetails) {
-        try {
-            Product updatedProduct = inventoryService.updateProduct(id, productDetails);
-            EntityModel<Product> productResource = EntityModel.of(updatedProduct,
-                linkTo(methodOn(InventoryController.class).getProductById(id)).withSelfRel(),
-                linkTo(methodOn(InventoryController.class).getAllProducts()).withRel("products"));
-            
-            return ResponseEntity.ok(productResource);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<EntityModel<Product>> updateProduct(@PathVariable String id, @RequestBody Product product) {
+        Product updated = inventoryService.updateProduct(id, product);
+        return ResponseEntity.ok(toModel(updated));
     }
     
     @DeleteMapping("/{id}")
@@ -82,8 +59,33 @@ public class InventoryController {
         return ResponseEntity.noContent().build();
     }
     
-    @GetMapping("/test")
-    public String test() {
-        return "Inventory Service is working!";
+    @PatchMapping("/{id}/reserve")
+    public ResponseEntity<EntityModel<Product>> reserveStock(@PathVariable String id, @RequestParam Integer quantity) {
+        Product product = inventoryService.reserveStock(id, quantity);
+        return ResponseEntity.ok(toModel(product));
+    }
+    
+    private EntityModel<Product> toModel(Product product) {
+        EntityModel<Product> model = EntityModel.of(product);
+        
+        model.add(linkTo(methodOn(InventoryController.class).getProduct(product.getId())).withSelfRel());
+        model.add(linkTo(methodOn(InventoryController.class).getAllProducts()).withRel("products"));
+        model.add(linkTo(methodOn(InventoryController.class).updateProduct(product.getId(), null))
+            .withRel("update"));
+        model.add(linkTo(methodOn(InventoryController.class).deleteProduct(product.getId()))
+            .withRel("delete"));
+        
+        // Only show reserve link if there's stock
+        if (product.getQuantity() > 0) {
+            model.add(linkTo(methodOn(InventoryController.class).reserveStock(product.getId(), null))
+                .withRel("reserve"));
+        }
+        
+        return model;
+    }
+    
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleException(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 }

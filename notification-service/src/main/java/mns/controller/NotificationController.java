@@ -1,81 +1,73 @@
 package mns.controller;
 
-import mns.model.Notification;
-import mns.service.NotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import mns.model.Notification;
+import mns.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
+    private final NotificationService notificationService;
     
-    @Autowired
-    private NotificationService notificationService;
-    
-    @GetMapping
-    public CollectionModel<EntityModel<Notification>> getAllNotifications() {
-        List<EntityModel<Notification>> notifications = notificationService.getAllNotifications().stream()
-            .map(notification -> EntityModel.of(notification,
-                linkTo(methodOn(NotificationController.class).getNotificationById(notification.getId())).withSelfRel(),
-                linkTo(methodOn(NotificationController.class).getAllNotifications()).withRel("notifications")))
-            .collect(Collectors.toList());
-        
-        return CollectionModel.of(notifications,
-            linkTo(methodOn(NotificationController.class).getAllNotifications()).withSelfRel());
+    public NotificationController(NotificationService notificationService) {
+        this.notificationService = notificationService;
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<Notification>> getNotificationById(@PathVariable Long id) {
-        return notificationService.getNotificationById(id)
-            .map(notification -> EntityModel.of(notification,
-                linkTo(methodOn(NotificationController.class).getNotificationById(id)).withSelfRel(),
-                linkTo(methodOn(NotificationController.class).getAllNotifications()).withRel("notifications")))
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<EntityModel<Notification>> getNotification(@PathVariable Long id) {
+        Notification notification = notificationService.getNotification(id);
+        return ResponseEntity.ok(toModel(notification));
     }
     
-    @PostMapping
-    public ResponseEntity<EntityModel<Notification>> createNotification(@RequestBody Notification notification) {
-        Notification savedNotification = notificationService.createNotification(notification);
-        EntityModel<Notification> notificationResource = EntityModel.of(savedNotification,
-            linkTo(methodOn(NotificationController.class).getNotificationById(savedNotification.getId())).withSelfRel(),
-            linkTo(methodOn(NotificationController.class).getAllNotifications()).withRel("notifications"));
+    @GetMapping
+    public ResponseEntity<CollectionModel<EntityModel<Notification>>> getAllNotifications() {
+        List<EntityModel<Notification>> notifications = notificationService.getAllNotifications()
+            .stream()
+            .map(this::toModel)
+            .collect(Collectors.toList());
         
-        return ResponseEntity.created(
-            linkTo(methodOn(NotificationController.class).getNotificationById(savedNotification.getId())).toUri())
-            .body(notificationResource);
+        CollectionModel<EntityModel<Notification>> collectionModel = CollectionModel.of(notifications);
+        collectionModel.add(linkTo(methodOn(NotificationController.class).getAllNotifications()).withSelfRel());
+        
+        return ResponseEntity.ok(collectionModel);
     }
     
-    @PutMapping("/{id}")
-    public ResponseEntity<EntityModel<Notification>> updateNotification(@PathVariable Long id, @RequestBody Notification notificationDetails) {
-        try {
-            Notification updatedNotification = notificationService.updateNotification(id, notificationDetails);
-            EntityModel<Notification> notificationResource = EntityModel.of(updatedNotification,
-                linkTo(methodOn(NotificationController.class).getNotificationById(id)).withSelfRel(),
-                linkTo(methodOn(NotificationController.class).getAllNotifications()).withRel("notifications"));
-            
-            return ResponseEntity.ok(notificationResource);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+    private EntityModel<Notification> toModel(Notification notification) {
+        EntityModel<Notification> model = EntityModel.of(notification);
+        
+        model.add(linkTo(methodOn(NotificationController.class).getNotification(notification.getId())).withSelfRel());
+        model.add(linkTo(methodOn(NotificationController.class).getAllNotifications()).withRel("notifications"));
+        
+        // Link to related resources
+        if (notification.getOrderId() != null) {
+            model.add(linkTo(methodOn(NotificationController.class).getNotification(notification.getId()))
+                .slash("../../orders/" + notification.getOrderId())
+                .withRel("order"));
         }
+        if (notification.getCustomerId() != null) {
+            model.add(linkTo(methodOn(NotificationController.class).getNotification(notification.getId()))
+                .slash("../../customers/" + notification.getCustomerId())
+                .withRel("customer"));
+        }
+        
+        return model;
     }
     
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
-        notificationService.deleteNotification(id);
-        return ResponseEntity.noContent().build();
-    }
-    
-    @GetMapping("/test")
-    public String test() {
-        return "Notification Service is working!";
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleException(RuntimeException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

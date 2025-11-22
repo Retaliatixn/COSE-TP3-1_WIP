@@ -2,9 +2,9 @@ package mcs.controller;
 
 import mcs.model.Customer;
 import mcs.service.CustomerService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,56 +16,41 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 @RestController
 @RequestMapping("/api/customers")
 public class CustomerController {
+    private final CustomerService customerService;
     
-    @Autowired
-    private CustomerService customerService;
-    
-    @GetMapping
-    public CollectionModel<EntityModel<Customer>> getAllCustomers() {
-        List<EntityModel<Customer>> customers = customerService.getAllCustomers().stream()
-            .map(customer -> EntityModel.of(customer,
-                linkTo(methodOn(CustomerController.class).getCustomerById(customer.getId())).withSelfRel(),
-                linkTo(methodOn(CustomerController.class).getAllCustomers()).withRel("customers")))
-            .collect(Collectors.toList());
-        
-        return CollectionModel.of(customers,
-            linkTo(methodOn(CustomerController.class).getAllCustomers()).withSelfRel());
-    }
-    
-    @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<Customer>> getCustomerById(@PathVariable Long id) {
-        return customerService.getCustomerById(id)
-            .map(customer -> EntityModel.of(customer,
-                linkTo(methodOn(CustomerController.class).getCustomerById(id)).withSelfRel(),
-                linkTo(methodOn(CustomerController.class).getAllCustomers()).withRel("customers")))
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+    public CustomerController(CustomerService customerService) {
+        this.customerService = customerService;
     }
     
     @PostMapping
     public ResponseEntity<EntityModel<Customer>> createCustomer(@RequestBody Customer customer) {
-        Customer savedCustomer = customerService.createCustomer(customer);
-        EntityModel<Customer> customerResource = EntityModel.of(savedCustomer,
-            linkTo(methodOn(CustomerController.class).getCustomerById(savedCustomer.getId())).withSelfRel(),
-            linkTo(methodOn(CustomerController.class).getAllCustomers()).withRel("customers"));
+        Customer created = customerService.createCustomer(customer);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<EntityModel<Customer>> getCustomer(@PathVariable Long id) {
+        Customer customer = customerService.getCustomer(id);
+        return ResponseEntity.ok(toModel(customer));
+    }
+    
+    @GetMapping
+    public ResponseEntity<CollectionModel<EntityModel<Customer>>> getAllCustomers() {
+        List<EntityModel<Customer>> customers = customerService.getAllCustomers()
+            .stream()
+            .map(this::toModel)
+            .collect(Collectors.toList());
         
-        return ResponseEntity.created(
-            linkTo(methodOn(CustomerController.class).getCustomerById(savedCustomer.getId())).toUri())
-            .body(customerResource);
+        CollectionModel<EntityModel<Customer>> collectionModel = CollectionModel.of(customers);
+        collectionModel.add(linkTo(methodOn(CustomerController.class).getAllCustomers()).withSelfRel());
+        
+        return ResponseEntity.ok(collectionModel);
     }
     
     @PutMapping("/{id}")
-    public ResponseEntity<EntityModel<Customer>> updateCustomer(@PathVariable Long id, @RequestBody Customer customerDetails) {
-        try {
-            Customer updatedCustomer = customerService.updateCustomer(id, customerDetails);
-            EntityModel<Customer> customerResource = EntityModel.of(updatedCustomer,
-                linkTo(methodOn(CustomerController.class).getCustomerById(id)).withSelfRel(),
-                linkTo(methodOn(CustomerController.class).getAllCustomers()).withRel("customers"));
-            
-            return ResponseEntity.ok(customerResource);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<EntityModel<Customer>> updateCustomer(@PathVariable Long id, @RequestBody Customer customer) {
+        Customer updated = customerService.updateCustomer(id, customer);
+        return ResponseEntity.ok(toModel(updated));
     }
     
     @DeleteMapping("/{id}")
@@ -74,8 +59,26 @@ public class CustomerController {
         return ResponseEntity.noContent().build();
     }
     
-    @GetMapping("/test")
-    public String test() {
-        return "Customer Service is working!";
+    private EntityModel<Customer> toModel(Customer customer) {
+        EntityModel<Customer> model = EntityModel.of(customer);
+        
+        model.add(linkTo(methodOn(CustomerController.class).getCustomer(customer.getId())).withSelfRel());
+        model.add(linkTo(methodOn(CustomerController.class).getAllCustomers()).withRel("customers"));
+        model.add(linkTo(methodOn(CustomerController.class).updateCustomer(customer.getId(), null))
+            .withRel("update"));
+        model.add(linkTo(methodOn(CustomerController.class).deleteCustomer(customer.getId()))
+            .withRel("delete"));
+        
+        // Link to customer's orders
+        model.add(linkTo(methodOn(CustomerController.class).getCustomer(customer.getId()))
+            .slash("orders")
+            .withRel("orders"));
+        
+        return model;
+    }
+    
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleException(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 }

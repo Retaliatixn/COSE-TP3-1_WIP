@@ -1,10 +1,9 @@
 package mss.service;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import mss.model.Shipment;
@@ -12,35 +11,32 @@ import mss.repository.ShippingRepository;
 
 @Service
 public class ShippingService {
+    private final ShippingRepository shippingRepository;
     
-    @Autowired
-    private ShippingRepository shippingRepository;
+    public ShippingService(ShippingRepository shippingRepository) {
+        this.shippingRepository = shippingRepository;
+    }
+    
+    public Shipment createShipment(Shipment shipment) {
+        shipment.setTrackingNumber("TRK-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        shipment.setShippedDate(LocalDateTime.now());
+        return shippingRepository.save(shipment);
+    }
+    
+    public Shipment getShipment(String id) {
+        return shippingRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Shipment not found: " + id));
+    }
     
     public List<Shipment> getAllShipments() {
         return shippingRepository.findAll();
     }
     
-    public Optional<Shipment> getShipmentById(String id) {
-        return shippingRepository.findById(id);
-    }
-    
-    public Shipment createShipment(Shipment shipment) {
-        // Set createdAt timestamp automatically
-        shipment.setCreatedAt(new Date());
-        return shippingRepository.save(shipment);
-    }
-    
-    public Shipment updateShipment(String id, Shipment shipmentDetails) {
-        Shipment shipment = shippingRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Shipment not found with id: " + id));
-        
-        // ONLY UPDATE FIELDS THAT ACTUALLY EXIST IN YOUR SHIPMENT CLASS:
-        shipment.setOrderId(shipmentDetails.getOrderId());
-        shipment.setTrackingNumber(shipmentDetails.getTrackingNumber());
-        shipment.setStatus(shipmentDetails.getStatus());
-        // Don't set createdAt on update - keep original creation date
-        
-        return shippingRepository.save(shipment);
+    public Shipment updateShipment(String id, Shipment shipment) {
+        Shipment existing = getShipment(id);
+        existing.setStatus(shipment.getStatus());
+        existing.setAddress(shipment.getAddress());
+        return shippingRepository.save(existing);
     }
     
     public void deleteShipment(String id) {

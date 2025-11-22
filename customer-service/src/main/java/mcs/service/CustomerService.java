@@ -1,42 +1,39 @@
 package mcs.service;
 
-import mcs.model.Customer;
-import mcs.repository.CustomerRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import mcs.model.Customer;
+import mcs.repository.CustomerRepository;
 
 @Service
 public class CustomerService {
+    private final CustomerRepository customerRepository;
     
-    @Autowired
-    private CustomerRepository customerRepository;
-    
-    public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
-    }
-    
-    public Optional<Customer> getCustomerById(Long id) {
-        return customerRepository.findById(id);
+    public CustomerService(CustomerRepository customerRepository) {
+        this.customerRepository = customerRepository;
     }
     
     public Customer createCustomer(Customer customer) {
         return customerRepository.save(customer);
     }
     
-    public Customer updateCustomer(Long id, Customer customerDetails) {
-        Customer customer = customerRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Customer not found with id: " + id));
-        
-        customer.setFirstName(customerDetails.getFirstName());
-        customer.setLastName(customerDetails.getLastName());
-        customer.setEmail(customerDetails.getEmail());
-        customer.setPhone(customerDetails.getPhone());
-        customer.setAddress(customerDetails.getAddress());
-        
-        return customerRepository.save(customer);
+    public Customer getCustomer(Long id) {
+        return customerRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Customer not found : " + id));
+    }
+    
+    public List<Customer> getAllCustomers() {
+        return customerRepository.findAll();
+    }
+    
+    public Customer updateCustomer(Long id, Customer customer) {
+        Customer existing = getCustomer(id);
+        existing.setFirstName(customer.getFirstName());
+        existing.setLastName(customer.getLastName());
+        existing.setEmail(customer.getEmail());
+        return customerRepository.save(existing);
     }
     
     public void deleteCustomer(Long id) {

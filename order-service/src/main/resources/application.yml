@@ -18,14 +18,31 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: create-drop  # Use 'update' in production
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
 
+  # Kafka Configuration - FIXED FOR DOCKER
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+# Service URLs (for WebClient)
+services:
+  customer:
+    url: ${SERVICES_CUSTOMER_URL:http://localhost:8083}
+  inventory:
+    url: ${SERVICES_INVENTORY_URL:http://localhost:8082}
+
 # Logging
 logging:
   level:
-    org.springframework.web: DEBUG
-    mos: DEBUG
+    org.springframework.web: INFO
+    mos: INFO
+    org.apache.kafka: WARN

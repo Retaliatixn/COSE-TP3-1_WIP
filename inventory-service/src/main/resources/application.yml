@@ -1,24 +1,21 @@
+# Server Configuration
 server:
   port: 8082
 
+# Application Configuration  
 spring:
   application:
     name: inventory-service
   
+  # MongoDB Configuration
   data:
     mongodb:
-      host: localhost
-      port: 27012
+      uri: mongodb://localhost:27012/inventory_db
       database: inventory_db
-#      uri: mongodb://localhost:27012/inventory-db
-#      username: admin
-#      password: password
-#      authentication-database: admin
 
-  main:
-    allow-bean-definition-overriding: true
-
+# Logging
 logging:
   level:
-    org.springframework.data.mongodb.core: DEBUG
+    org.springframework.web: DEBUG
     mis: DEBUG
+    org.springframework.data.mongodb: DEBUG

@@ -1,10 +1,7 @@
 package mps.service;
 
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import mps.model.Payment;
@@ -12,38 +9,25 @@ import mps.repository.PaymentRepository;
 
 @Service
 public class PaymentService {
+    private final PaymentRepository paymentRepository;
     
-    @Autowired
-    private PaymentRepository paymentRepository;
+    public PaymentService(PaymentRepository paymentRepository) {
+        this.paymentRepository = paymentRepository;
+    }
+    
+    public Payment getPayment(Long id) {
+        return paymentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Payment not found: " + id));
+    }
     
     public List<Payment> getAllPayments() {
         return paymentRepository.findAll();
     }
     
-    public Optional<Payment> getPaymentById(Long id) {
-        return paymentRepository.findById(id);
-    }
-    
-    public Payment createPayment(Payment payment) {
-        payment.setCreatedAt(new Date());
-        return paymentRepository.save(payment);
-    }
-    
-    public Payment updatePayment(Long id, Payment paymentDetails) {
-        Payment payment = paymentRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Payment not found with id: " + id));
-        
-        // payment.setId(paymentDetails.getId());
-        payment.setOrderId(paymentDetails.getOrderId());
-        payment.setAmount(paymentDetails.getAmount());
-        payment.setPaymentMethod(paymentDetails.getPaymentMethod());
-        payment.setStatus(paymentDetails.getStatus());
-        payment.setTransactionId(paymentDetails.getTransactionId()); 
-
-        return paymentRepository.save(payment);
-    }
-    
-    public void deletePayment(Long id) {
-        paymentRepository.deleteById(id);
+    public Payment getPaymentByOrderId(Long orderId) {
+        return paymentRepository.findAll().stream()
+            .filter(p -> p.getOrderId().equals(orderId))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
     }
 }
