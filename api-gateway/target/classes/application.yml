@@ -1,0 +1,19 @@
+# Server Configuration
+server:
+  port: 8080
+
+# Application Configuration
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      enabled: true
+    compatibility-verifier:
+      enabled: false
+
+# Logging
+logging:
+  level:
+    org.springframework.web: INFO
+    org.springframework.cloud.gateway: DEBUG

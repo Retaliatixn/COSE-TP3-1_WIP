@@ -1,0 +1,2 @@
+#!/bin/bash
+mvn -N wrapper:wrapper -Dmaven.wrapper.version=3.8.1

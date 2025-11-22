@@ -1,6 +1,22 @@
 version: '3.8'
 
 services:
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - order-service
+      - payment-service
+      - shipping-service
+      - notification-service
+      - customer-service
+      - inventory-service
+    networks:
+      - microservices-network
+
   # Kafka Infrastructure
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
