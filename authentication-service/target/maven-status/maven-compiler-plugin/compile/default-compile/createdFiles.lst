@@ -1,0 +1,10 @@
+auth/repository/RoleRepository.class
+auth/controller/AuthController.class
+auth/model/User.class
+auth/repository/UserRepository.class
+auth/service/AuthService.class
+auth/config/JwtConfig.class
+auth/AuthApplication.class
+auth/service/UserService.class
+auth/model/Role.class
+auth/model/LoginRequest.class

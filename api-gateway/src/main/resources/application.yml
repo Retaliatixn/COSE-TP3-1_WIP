@@ -12,8 +12,13 @@ spring:
     compatibility-verifier:
       enabled: false
 
+# JWT Configuration
+jwt:
+  secret: my-super-secret-key-for-jwt-tokens
+
 # Logging
 logging:
   level:
     org.springframework.web: INFO
     org.springframework.cloud.gateway: DEBUG
+

@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: authentication-service
+  datasource:
+    url: jdbc:postgresql://auth-db:5432/auth_service
+    username: postgres
+    password: password123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+server:
+  port: 8087
+  servlet:
+    context-path: /api
+
+jwt:
+  secret: my-super-secret-key-for-jwt-tokens
+  expiration: 900000  # 15 minutes in milliseconds

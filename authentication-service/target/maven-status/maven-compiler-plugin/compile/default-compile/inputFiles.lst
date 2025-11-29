@@ -1,0 +1,10 @@
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/AuthApplication.java
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/config/JwtConfig.java
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/controller/AuthController.java
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/model/LoginRequest.java
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/model/Role.java
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/model/User.java
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/repository/RoleRepository.java
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/repository/UserRepository.java
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/service/AuthService.java
+/home/reta/Documents/M2_RSD/TP/TP3/authentication-service/src/main/java/auth/service/UserService.java

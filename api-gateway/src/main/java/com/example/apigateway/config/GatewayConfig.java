@@ -11,6 +11,11 @@ public class GatewayConfig {
     @Bean
     public RouteLocator routes(RouteLocatorBuilder builder) {
         return builder.routes()
+                // Authentication Service
+                .route("auth-service", r -> r
+                        .path("/api/auth/**")
+                        .uri("http://authentication-service:8087"))
+                
                 // Order Service
                 .route("order-service", r -> r
                         .path("/api/orders/**")

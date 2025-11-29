@@ -1,1 +1,3 @@
 /home/reta/Documents/M2_RSD/TP/TP3/api-gateway/src/main/java/com/example/apigateway/ApiGatewayApplication.java
+/home/reta/Documents/M2_RSD/TP/TP3/api-gateway/src/main/java/com/example/apigateway/config/GatewayConfig.java
+/home/reta/Documents/M2_RSD/TP/TP3/api-gateway/src/main/java/com/example/apigateway/filter/JwtAuthenticationFilter.java

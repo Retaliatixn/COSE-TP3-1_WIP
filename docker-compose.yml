@@ -7,6 +7,8 @@ services:
     container_name: api-gateway
     ports:
       - "8080:8080"
+    environment:
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
     depends_on:
       - order-service
       - payment-service
@@ -14,6 +16,7 @@ services:
       - notification-service
       - customer-service
       - inventory-service
+      - authentication-service
     networks:
       - microservices-network
 
@@ -230,6 +233,37 @@ services:
     networks:
       - microservices-network
 
+  # Authentication Service
+  auth-db:
+    image: postgres:15
+    container_name: auth-db
+    environment:
+      POSTGRES_DB: auth_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5435:5432"
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+
+  authentication-service:
+    build: ./authentication-service
+    container_name: authentication-service
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_service
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password123
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      JWT_EXPIRATION: 900000
+    depends_on:
+      - auth-db
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     driver: bridge
@@ -241,3 +275,4 @@ volumes:
   payment_data:
   shipping_data:
   notification_data:
+  auth_data:
