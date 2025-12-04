@@ -10,6 +10,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,12 +34,14 @@ public class ShippingController {
     }
     
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<EntityModel<Shipment>> getShipment(@PathVariable String id) {
         Shipment shipment = shippingService.getShipment(id);
         return ResponseEntity.ok(toModel(shipment));
     }
     
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CollectionModel<EntityModel<Shipment>>> getAllShipments() {
         List<EntityModel<Shipment>> shipments = shippingService.getAllShipments()
             .stream()
@@ -52,24 +55,28 @@ public class ShippingController {
     }
     
     @GetMapping("/order/{orderId}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<EntityModel<Shipment>> getShipmentByOrderId(@PathVariable Long orderId) {
         Shipment shipment = shippingService.getShipmentByOrderId(orderId);
         return ResponseEntity.ok(toModel(shipment));
     }
     
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EntityModel<Shipment>> createShipment(@RequestBody Shipment shipment) {
         Shipment created = shippingService.createShipment(shipment);
         return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EntityModel<Shipment>> updateShipment(@PathVariable String id, @RequestBody Shipment shipment) {
         Shipment updated = shippingService.updateShipment(id, shipment);
         return ResponseEntity.ok(toModel(updated));
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteShipment(@PathVariable String id) {
         shippingService.deleteShipment(id);
         return ResponseEntity.noContent().build();

@@ -9,6 +9,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,12 +32,14 @@ public class NotificationController {
     }
     
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<EntityModel<Notification>> getNotification(@PathVariable Long id) {
         Notification notification = notificationService.getNotification(id);
         return ResponseEntity.ok(toModel(notification));
     }
     
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CollectionModel<EntityModel<Notification>>> getAllNotifications() {
         List<EntityModel<Notification>> notifications = notificationService.getAllNotifications()
             .stream()
@@ -50,6 +53,7 @@ public class NotificationController {
     }
     
     @GetMapping("/order/{orderId}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<CollectionModel<EntityModel<Notification>>> getNotificationsByOrderId(@PathVariable Long orderId) {
         List<EntityModel<Notification>> notifications = notificationService.getNotificationsByOrderId(orderId)
             .stream()
@@ -63,6 +67,7 @@ public class NotificationController {
     }
     
     @GetMapping("/customer/{customerId}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<CollectionModel<EntityModel<Notification>>> getNotificationsByCustomerId(@PathVariable Long customerId) {
         List<EntityModel<Notification>> notifications = notificationService.getNotificationsByCustomerId(customerId)
             .stream()
@@ -76,18 +81,21 @@ public class NotificationController {
     }
     
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EntityModel<Notification>> createNotification(@RequestBody Notification notification) {
         Notification created = notificationService.createNotification(notification);
         return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EntityModel<Notification>> updateNotification(@PathVariable Long id, @RequestBody Notification notification) {
         Notification updated = notificationService.updateNotification(id, notification);
         return ResponseEntity.ok(toModel(updated));
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         notificationService.deleteNotification(id);
         return ResponseEntity.noContent().build();

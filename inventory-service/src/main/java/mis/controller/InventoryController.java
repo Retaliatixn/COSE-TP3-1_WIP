@@ -6,6 +6,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,18 +24,21 @@ public class InventoryController {
     }
     
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EntityModel<Product>> createProduct(@RequestBody Product product) {
         Product created = inventoryService.createProduct(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
     }
     
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<EntityModel<Product>> getProduct(@PathVariable String id) {
         Product product = inventoryService.getProduct(id);
         return ResponseEntity.ok(toModel(product));
     }
     
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<CollectionModel<EntityModel<Product>>> getAllProducts() {
         List<EntityModel<Product>> products = inventoryService.getAllProducts()
             .stream()
@@ -48,12 +52,14 @@ public class InventoryController {
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EntityModel<Product>> updateProduct(@PathVariable String id, @RequestBody Product product) {
         Product updated = inventoryService.updateProduct(id, product);
         return ResponseEntity.ok(toModel(updated));
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
         inventoryService.deleteProduct(id);
         return ResponseEntity.noContent().build();

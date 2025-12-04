@@ -9,6 +9,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,12 +33,14 @@ public class PaymentController {
     }
     
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<EntityModel<Payment>> getPayment(@PathVariable Long id) {
         Payment payment = paymentService.getPayment(id);
         return ResponseEntity.ok(toModel(payment));
     }
     
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CollectionModel<EntityModel<Payment>>> getAllPayments() {
         List<EntityModel<Payment>> payments = paymentService.getAllPayments()
             .stream()
@@ -51,24 +54,28 @@ public class PaymentController {
     }
     
     @GetMapping("/order/{orderId}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<EntityModel<Payment>> getPaymentByOrderId(@PathVariable Long orderId) {
         Payment payment = paymentService.getPaymentByOrderId(orderId);
         return ResponseEntity.ok(toModel(payment));
     }
     
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<EntityModel<Payment>> createPayment(@RequestBody Payment payment) {
         Payment created = paymentService.createPayment(payment);
         return ResponseEntity.status(HttpStatus.CREATED).body(toModel(created));
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EntityModel<Payment>> updatePayment(@PathVariable Long id, @RequestBody Payment payment) {
         Payment updated = paymentService.updatePayment(id, payment);
         return ResponseEntity.ok(toModel(updated));
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletePayment(@PathVariable Long id) {
         paymentService.deletePayment(id);
         return ResponseEntity.noContent().build();

@@ -10,6 +10,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +35,7 @@ public class OrderController {
     }
     
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<EntityModel<Order>> createOrder(@RequestBody OrderRequest request) {
         Order order = orderService.createOrder(request);
         EntityModel<Order> model = toModel(order);
@@ -41,12 +43,14 @@ public class OrderController {
     }
     
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CUSTOMER')")
     public ResponseEntity<EntityModel<Order>> getOrder(@PathVariable Long id) {
         Order order = orderService.getOrder(id);
         return ResponseEntity.ok(toModel(order));
     }
     
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CollectionModel<EntityModel<Order>>> getAllOrders() {
         List<EntityModel<Order>> orders = orderService.getAllOrders()
             .stream()
@@ -60,12 +64,14 @@ public class OrderController {
     }
     
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EntityModel<Order>> updateOrder(@PathVariable Long id, @RequestBody OrderRequest request) {
         Order order = orderService.updateOrder(id, request);
         return ResponseEntity.ok(toModel(order));
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();
